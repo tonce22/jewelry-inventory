@@ -871,16 +871,18 @@
                 if (data.documents) {
                     data.documents.forEach(doc => {
                         const item = doc.fields;
+                        const saleDate = item.saleDate?.stringValue || '';
                         items.push({
                             id: doc.name.split('/').pop(),
                             name: item.name?.stringValue || '',
                             description: item.description?.stringValue || '',
                             quantity: parseInt(item.quantity?.integerValue || 1),
                             purchaseDate: item.purchaseDate?.stringValue || '',
-                            saleDate: item.saleDate?.stringValue || '',
+                            saleDate: saleDate,
                             buyingPrice: parseFloat(item.buyingPrice?.doubleValue || 0),
                             sellingPrice: parseFloat(item.sellingPrice?.doubleValue || 0),
-                            notes: item.notes?.stringValue || ''
+                            notes: item.notes?.stringValue || '',
+                            status: saleDate ? 'Sold' : 'In Stock'
                         });
                     });
                 }
