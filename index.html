@@ -871,18 +871,29 @@
                 if (data.documents) {
                     data.documents.forEach(doc => {
                         const item = doc.fields;
+                        const quantity = parseInt(item.quantity?.integerValue || 1);
+                        const quantitySold = parseInt(item.quantitySold?.integerValue || 0);
                         const saleDate = item.saleDate?.stringValue || '';
+
+                        let status = 'In Stock';
+                        if (quantitySold > 0 && quantitySold >= quantity) {
+                            status = 'Sold';
+                        } else if (quantitySold > 0) {
+                            status = 'Partially Sold';
+                        }
+
                         items.push({
                             id: doc.name.split('/').pop(),
                             name: item.name?.stringValue || '',
                             description: item.description?.stringValue || '',
-                            quantity: parseInt(item.quantity?.integerValue || 1),
+                            quantity: quantity,
+                            quantitySold: quantitySold,
                             purchaseDate: item.purchaseDate?.stringValue || '',
                             saleDate: saleDate,
                             buyingPrice: parseFloat(item.buyingPrice?.doubleValue || 0),
                             sellingPrice: parseFloat(item.sellingPrice?.doubleValue || 0),
                             notes: item.notes?.stringValue || '',
-                            status: saleDate ? 'Sold' : 'In Stock'
+                            status: status
                         });
                     });
                 }
@@ -902,6 +913,7 @@
                     name: { stringValue: item.name },
                     description: { stringValue: item.description || '' },
                     quantity: { integerValue: item.quantity || 1 },
+                    quantitySold: { integerValue: item.quantitySold || 0 },
                     purchaseDate: { stringValue: item.purchaseDate },
                     saleDate: { stringValue: item.saleDate || '' },
                     buyingPrice: { doubleValue: item.buyingPrice },
@@ -1109,13 +1121,14 @@
             tbody.innerHTML = items.map(item => {
                 const profit = (item.sellingPrice || 0) - (item.buyingPrice || 0);
                 const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
-                const isSold = item.status === 'Sold';
+                const quantityRemaining = (item.quantity || 1) - (item.quantitySold || 0);
+                const canSellMore = quantityRemaining > 0;
 
                 return `
                     <tr>
                         <td><strong>${item.name}</strong></td>
                         <td>${item.description || '-'}</td>
-                        <td>${item.quantity || 1}</td>
+                        <td>${item.quantity || 1} (${item.quantitySold || 0} sold, ${quantityRemaining} left)</td>
                         <td>${item.purchaseDate}</td>
                         <td>${item.saleDate || '-'}</td>
                         <td class="currency">₾${(item.buyingPrice || 0).toFixed(2)}</td>
@@ -1123,9 +1136,9 @@
                         <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '₾' + profit.toFixed(2) : '-'}</td>
                         <td><span class="status-badge status-${item.status.replace(' ', '-').toLowerCase()}">${item.status}</span></td>
                         <td class="actions">
-                            ${isSold ?
-                                `<button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>` :
-                                `<button class="btn btn-success btn-sm" onclick="openSellModal('${item.id}')">Sell</button>`
+                            ${canSellMore ?
+                                `<button class="btn btn-success btn-sm" onclick="openSellModal('${item.id}')">Sell</button>` :
+                                `<button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>`
                             }
                             <button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')">Delete</button>
@@ -1169,13 +1182,14 @@
             tbody.innerHTML = items.map(item => {
                 const profit = (item.sellingPrice || 0) - (item.buyingPrice || 0);
                 const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
-                const isSold = item.status === 'Sold';
+                const quantityRemaining = (item.quantity || 1) - (item.quantitySold || 0);
+                const canSellMore = quantityRemaining > 0;
 
                 return `
                     <tr>
                         <td><strong>${item.name}</strong></td>
                         <td>${item.description || '-'}</td>
-                        <td>${item.quantity || 1}</td>
+                        <td>${item.quantity || 1} (${item.quantitySold || 0} sold, ${quantityRemaining} left)</td>
                         <td>${item.purchaseDate}</td>
                         <td>${item.saleDate || '-'}</td>
                         <td class="currency">₾${(item.buyingPrice || 0).toFixed(2)}</td>
@@ -1183,9 +1197,9 @@
                         <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '₾' + profit.toFixed(2) : '-'}</td>
                         <td><span class="status-badge status-${item.status.replace(' ', '-').toLowerCase()}">${item.status}</span></td>
                         <td class="actions">
-                            ${isSold ?
-                                `<button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>` :
-                                `<button class="btn btn-success btn-sm" onclick="openSellModal('${item.id}')">Sell</button>`
+                            ${canSellMore ?
+                                `<button class="btn btn-success btn-sm" onclick="openSellModal('${item.id}')">Sell</button>` :
+                                `<button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>`
                             }
                             <button class="btn btn-secondary btn-sm" onclick="openEditItemModal('${item.id}')">Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')">Delete</button>
@@ -1367,19 +1381,20 @@
             if (!item) return;
 
             const sellQty = parseInt(document.getElementById('sellQuantity').value);
-            const remainingQty = (item.quantity || 1) - sellQty;
+            const quantitySold = (item.quantitySold || 0) + sellQty;
+            const remainingQty = (item.quantity || 1) - quantitySold;
 
             const updatedItem = {
                 ...item,
-                quantity: remainingQty,
+                quantitySold: quantitySold,
                 saleDate: document.getElementById('sellDate').value,
                 sellingPrice: parseFloat(document.getElementById('sellPrice').value),
                 notes: (item.notes || '') + (document.getElementById('sellNotes').value ? '\nSale: ' + document.getElementById('sellNotes').value : ''),
-                status: remainingQty > 0 ? 'In Stock' : 'Sold'
+                status: remainingQty > 0 ? 'Partially Sold' : 'Sold'
             };
 
             saveItemToFirebase(updatedItem);
-            showAlert(`Sold ${sellQty} unit(s) successfully!`, 'success');
+            showAlert(`Sold ${sellQty} unit(s) successfully! ${remainingQty} remaining.`, 'success');
 
             closeSellModal();
         }
