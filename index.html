@@ -606,11 +606,17 @@
 
             <div class="filters">
                 <input type="text" id="searchInput" placeholder="Search by name or description..." onkeyup="filterInventory()">
+                <select id="sellerFilter" onchange="updateSellerFilter(); filterInventory()">
+                    <option value="">All Sellers</option>
+                </select>
                 <select id="statusFilter" onchange="filterInventory()">
                     <option value="">All Status</option>
                     <option value="In Stock">In Stock</option>
+                    <option value="Partially Sold">Partially Sold</option>
                     <option value="Sold">Sold</option>
                 </select>
+                <input type="number" id="priceFromFilter" placeholder="Min Price (₾)" onchange="filterInventory()">
+                <input type="number" id="priceToFilter" placeholder="Max Price (₾)" onchange="filterInventory()">
                 <input type="date" id="dateFromFilter" onchange="filterInventory()" placeholder="From Date">
                 <input type="date" id="dateToFilter" onchange="filterInventory()" placeholder="To Date">
                 <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
@@ -622,6 +628,7 @@
                     <thead>
                         <tr>
                             <th>Item Name</th>
+                            <th>Seller</th>
                             <th>Description</th>
                             <th>Qty</th>
                             <th>Purchase Date</th>
@@ -666,6 +673,13 @@
                         <label for="itemName">Item Name *</label>
                         <input type="text" id="itemName" required>
                     </div>
+                    <div class="form-group">
+                        <label for="itemSeller">Seller/Supplier *</label>
+                        <input type="text" id="itemSeller" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="itemDescription">Description</label>
                         <textarea id="itemDescription"></textarea>
@@ -885,6 +899,7 @@
                         items.push({
                             id: doc.name.split('/').pop(),
                             name: item.name?.stringValue || '',
+                            seller: item.seller?.stringValue || '',
                             description: item.description?.stringValue || '',
                             quantity: quantity,
                             quantitySold: quantitySold,
@@ -911,6 +926,7 @@
                 const token = localStorage.getItem('firebaseToken');
                 const fields = {
                     name: { stringValue: item.name },
+                    seller: { stringValue: item.seller || '' },
                     description: { stringValue: item.description || '' },
                     quantity: { integerValue: item.quantity || 1 },
                     quantitySold: { integerValue: item.quantitySold || 0 },
@@ -983,6 +999,7 @@
             document.getElementById('modalTitle').textContent = 'Edit Item';
 
             document.getElementById('itemName').value = item.name;
+            document.getElementById('itemSeller').value = item.seller || '';
             document.getElementById('itemDescription').value = item.description || '';
             document.getElementById('quantity').value = item.quantity || 1;
             document.getElementById('purchaseDate').value = item.purchaseDate;
@@ -1004,6 +1021,7 @@
 
             const item = {
                 name: document.getElementById('itemName').value,
+                seller: document.getElementById('itemSeller').value,
                 description: document.getElementById('itemDescription').value,
                 quantity: parseInt(document.getElementById('quantity').value),
                 purchaseDate: document.getElementById('purchaseDate').value,
@@ -1128,6 +1146,7 @@
                 return `
                     <tr>
                         <td><strong>${item.name}</strong></td>
+                        <td>${item.seller || '-'}</td>
                         <td>${item.description || '-'}</td>
                         <td>${item.quantity || 1} (${item.quantitySold || 0} sold, ${quantityRemaining} left)</td>
                         <td>${item.purchaseDate}</td>
@@ -1147,11 +1166,15 @@
                     </tr>
                 `;
             }).join('');
+            updateSellerFilter();
         }
 
         function filterInventory() {
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const seller = document.getElementById('sellerFilter').value;
             const status = document.getElementById('statusFilter').value;
+            const priceFrom = document.getElementById('priceFromFilter').value ? parseFloat(document.getElementById('priceFromFilter').value) : null;
+            const priceTo = document.getElementById('priceToFilter').value ? parseFloat(document.getElementById('priceToFilter').value) : null;
             const dateFrom = document.getElementById('dateFromFilter').value;
             const dateTo = document.getElementById('dateToFilter').value;
 
@@ -1160,13 +1183,15 @@
                     item.name.toLowerCase().includes(search) ||
                     (item.description || '').toLowerCase().includes(search);
 
+                const matchesSeller = !seller || item.seller === seller;
                 const matchesStatus = !status || item.status === status;
+                const matchesPrice = (!priceFrom || item.buyingPrice >= priceFrom) && (!priceTo || item.buyingPrice <= priceTo);
 
                 const itemDate = new Date(item.purchaseDate);
                 const matchesDateFrom = !dateFrom || itemDate >= new Date(dateFrom);
                 const matchesDateTo = !dateTo || itemDate <= new Date(dateTo);
 
-                return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
+                return matchesSearch && matchesSeller && matchesStatus && matchesPrice && matchesDateFrom && matchesDateTo;
             });
 
             const tbody = document.getElementById('inventoryBody');
@@ -1189,6 +1214,7 @@
                 return `
                     <tr>
                         <td><strong>${item.name}</strong></td>
+                        <td>${item.seller || '-'}</td>
                         <td>${item.description || '-'}</td>
                         <td>${item.quantity || 1} (${item.quantitySold || 0} sold, ${quantityRemaining} left)</td>
                         <td>${item.purchaseDate}</td>
@@ -1210,9 +1236,28 @@
             }).join('');
         }
 
+        function updateSellerFilter() {
+            const sellers = [...new Set((window.inventoryItems || []).map(item => item.seller).filter(s => s))];
+            const sellerFilter = document.getElementById('sellerFilter');
+            const currentValue = sellerFilter.value;
+
+            sellerFilter.innerHTML = '<option value="">All Sellers</option>';
+            sellers.forEach(seller => {
+                const option = document.createElement('option');
+                option.value = seller;
+                option.textContent = seller;
+                sellerFilter.appendChild(option);
+            });
+
+            sellerFilter.value = currentValue;
+        }
+
         function clearFilters() {
             document.getElementById('searchInput').value = '';
+            document.getElementById('sellerFilter').value = '';
             document.getElementById('statusFilter').value = '';
+            document.getElementById('priceFromFilter').value = '';
+            document.getElementById('priceToFilter').value = '';
             document.getElementById('dateFromFilter').value = '';
             document.getElementById('dateToFilter').value = '';
             renderInventoryTable();
@@ -1409,13 +1454,16 @@
 
         function exportToCSV() {
             const data = window.inventoryItems || [];
-            let csv = 'Item Name,Description,Purchase Date,Sale Date,Buying Price,Selling Price,Profit/Loss,Status,Notes\n';
+            let csv = 'Item Name,Seller,Description,Quantity,Purchase Date,Sale Date,Buying Price,Selling Price,Profit/Loss,Status,Notes\n';
 
             data.forEach(item => {
                 const profit = item.sellingPrice ? item.sellingPrice - item.buyingPrice : '';
+                const quantityRemaining = (item.quantity || 1) - (item.quantitySold || 0);
                 const row = [
                     `"${item.name}"`,
+                    `"${item.seller || ''}"`,
                     `"${item.description || ''}"`,
+                    `"${item.quantity || 1} (${item.quantitySold || 0} sold, ${quantityRemaining} left)"`,
                     item.purchaseDate,
                     item.saleDate || '',
                     item.buyingPrice,
