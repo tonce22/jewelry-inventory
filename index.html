@@ -692,11 +692,11 @@
 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="buyingPrice">Buying Price ($) *</label>
+                        <label for="buyingPrice">Buying Price (₾) *</label>
                         <input type="number" id="buyingPrice" step="0.01" required>
                     </div>
                     <div class="form-group">
-                        <label for="sellingPrice">Selling Price ($)</label>
+                        <label for="sellingPrice">Selling Price (₾)</label>
                         <input type="number" id="sellingPrice" step="0.01">
                     </div>
                 </div>
@@ -736,7 +736,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="sellPrice">Selling Price per Unit ($) *</label>
+                    <label for="sellPrice">Selling Price per Unit (₾) *</label>
                     <input type="number" id="sellPrice" step="0.01" required>
                 </div>
 
@@ -1022,15 +1022,15 @@
             const statsHTML = `
                 <div class="stat-card">
                     <h3>Total Investment</h3>
-                    <div class="value currency">$${stats.totalInvestment.toFixed(2)}</div>
+                    <div class="value currency">₾${stats.totalInvestment.toFixed(2)}</div>
                 </div>
                 <div class="stat-card revenue">
                     <h3>Total Revenue</h3>
-                    <div class="value currency">$${stats.totalRevenue.toFixed(2)}</div>
+                    <div class="value currency">₾${stats.totalRevenue.toFixed(2)}</div>
                 </div>
                 <div class="stat-card ${stats.totalNetProfit >= 0 ? 'profit' : 'loss'}">
                     <h3>Net Profit/Loss</h3>
-                    <div class="value currency">${stats.totalNetProfit >= 0 ? '+' : ''}$${stats.totalNetProfit.toFixed(2)}</div>
+                    <div class="value currency">${stats.totalNetProfit >= 0 ? '+' : ''}₾${stats.totalNetProfit.toFixed(2)}</div>
                 </div>
                 <div class="stat-card">
                     <h3>Profit Margin</h3>
@@ -1116,9 +1116,9 @@
                         <td>${item.quantity || 1}</td>
                         <td>${item.purchaseDate}</td>
                         <td>${item.saleDate || '-'}</td>
-                        <td class="currency">$${(item.buyingPrice || 0).toFixed(2)}</td>
-                        <td class="currency">${item.sellingPrice ? '$' + (item.sellingPrice).toFixed(2) : '-'}</td>
-                        <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '$' + profit.toFixed(2) : '-'}</td>
+                        <td class="currency">₾${(item.buyingPrice || 0).toFixed(2)}</td>
+                        <td class="currency">${item.sellingPrice ? '₾' + (item.sellingPrice).toFixed(2) : '-'}</td>
+                        <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '₾' + profit.toFixed(2) : '-'}</td>
                         <td><span class="status-badge status-${item.status.replace(' ', '-').toLowerCase()}">${item.status}</span></td>
                         <td class="actions">
                             ${isSold ?
@@ -1176,9 +1176,9 @@
                         <td>${item.quantity || 1}</td>
                         <td>${item.purchaseDate}</td>
                         <td>${item.saleDate || '-'}</td>
-                        <td class="currency">$${(item.buyingPrice || 0).toFixed(2)}</td>
-                        <td class="currency">${item.sellingPrice ? '$' + (item.sellingPrice).toFixed(2) : '-'}</td>
-                        <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '$' + profit.toFixed(2) : '-'}</td>
+                        <td class="currency">₾${(item.buyingPrice || 0).toFixed(2)}</td>
+                        <td class="currency">${item.sellingPrice ? '₾' + (item.sellingPrice).toFixed(2) : '-'}</td>
+                        <td class="${profitClass}">${item.sellingPrice ? (profit >= 0 ? '+' : '') + '₾' + profit.toFixed(2) : '-'}</td>
                         <td><span class="status-badge status-${item.status.replace(' ', '-').toLowerCase()}">${item.status}</span></td>
                         <td class="actions">
                             ${isSold ?
