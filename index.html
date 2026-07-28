@@ -566,8 +566,8 @@
                 <input type="password" id="authPassword" placeholder="Enter password">
             </div>
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="loginUser()" style="flex: 1;">Sign In</button>
-                <button class="btn btn-secondary" onclick="toggleAuthMode()" style="flex: 1;">Sign Up</button>
+                <button class="btn btn-primary" onclick="submitAuth()" style="flex: 1;" id="submitBtn">Sign In</button>
+                <button class="btn btn-secondary" onclick="toggleAuthMode()" style="flex: 1;" id="toggleBtn">Sign Up</button>
             </div>
             <div id="authError" style="color: var(--danger); margin-top: 15px; text-align: center;"></div>
         </div>
@@ -792,10 +792,23 @@
 
         function toggleAuthMode() {
             authMode = authMode === 'signin' ? 'signup' : 'signin';
-            document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+            const submitBtn = document.getElementById('submitBtn');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const title = document.getElementById('authTitle');
+
+            if (authMode === 'signin') {
+                title.textContent = 'Sign In';
+                submitBtn.textContent = 'Sign In';
+                toggleBtn.textContent = 'Sign Up';
+            } else {
+                title.textContent = 'Create Account';
+                submitBtn.textContent = 'Sign Up';
+                toggleBtn.textContent = 'Sign In';
+            }
+            document.getElementById('authError').textContent = '';
         }
 
-        function loginUser() {
+        function submitAuth() {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
 
