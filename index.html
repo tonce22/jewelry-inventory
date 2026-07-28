@@ -905,7 +905,7 @@
             }
         }
 
-        async function saveItemToFirebase(item) {
+        async function saveItemToFirebase(item, itemId) {
             if (!currentUser) return;
             try {
                 const token = localStorage.getItem('firebaseToken');
@@ -921,9 +921,10 @@
                     notes: { stringValue: item.notes || '' }
                 };
 
-                if (currentEditId) {
+                const id = itemId || currentEditId;
+                if (id) {
                     await fetch(
-                        `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users/${currentUser.uid}/items/${currentEditId}`,
+                        `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users/${currentUser.uid}/items/${id}`,
                         {
                             method: 'PATCH',
                             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -1393,7 +1394,7 @@
                 status: remainingQty > 0 ? 'Partially Sold' : 'Sold'
             };
 
-            saveItemToFirebase(updatedItem);
+            saveItemToFirebase(updatedItem, currentSellId);
             showAlert(`Sold ${sellQty} unit(s) successfully! ${remainingQty} remaining.`, 'success');
 
             closeSellModal();
